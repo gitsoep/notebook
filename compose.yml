@@ -1,0 +1,16 @@
+services:
+  chatapp:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+    volumes:
+      - chatapp-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  chatapp-data:
