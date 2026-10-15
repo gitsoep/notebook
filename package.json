@@ -1,5 +1,5 @@
 {
-  "name": "chatapp",
+  "name": "notebook",
   "version": "1.0.0",
   "description": "Shared notebook chat for exchanging notes",
   "main": "server.js",

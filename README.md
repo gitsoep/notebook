@@ -37,13 +37,13 @@ Build and start the container with Docker Compose:
 
 ```bash
 docker compose up --build -d
-docker compose logs -f chatapp
+docker compose logs -f notebook
 ```
 
 Open <http://localhost:3000>. On first start, the server creates an admin account and prints its
 temporary password in the container logs. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in your
 environment before starting to configure the initial account yourself. The data files are kept in
-the `chatapp-data` named volume across container rebuilds and restarts.
+the `notebook-data` named volume across container rebuilds and restarts.
 
 To stop the container, run `docker compose down`. The named volume is retained; use
 `docker compose down -v` only if you also want to delete the stored users, sessions, and notes.
