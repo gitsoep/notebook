@@ -1,6 +1,6 @@
 services:
   notebook:
-    build: .
+    image: ghcr.io/gitsoep/notebook:latest
     ports:
       - "3000:3000"
     environment:
