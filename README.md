@@ -22,6 +22,9 @@ Passwords are hashed with scrypt; sessions are HttpOnly cookies valid for 30 day
 throttled per IP. Set `COOKIE_SECURE=1` when serving over HTTPS (or behind a proxy that sets
 `X-Forwarded-Proto: https`).
 
+The API and WebSocket accept cross-origin requests from `https://notebook.soep.org` and
+`https://notes.soep.org`.
+
 ## Run
 
 ```bash

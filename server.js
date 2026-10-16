@@ -10,6 +10,10 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_FILE = path.join(__dirname, 'data', 'notes.json');
 const COOKIE_NAME = 'cn_session';
 const COOKIE_SECURE = process.env.COOKIE_SECURE === '1';
+const CORS_ORIGINS = new Set([
+  'https://notebook.soep.org',
+  'https://notes.soep.org',
+]);
 const MAX_NOTES = 500;
 const MAX_TEXT = 2000;
 const RATE_WINDOW_MS = 5000;
@@ -87,7 +91,23 @@ function sameOrigin(req) {
   const origin = req.headers.origin;
   if (!origin) return true;
   try {
-    return new URL(origin).host === req.headers.host;
+    const parsedOrigin = new URL(origin);
+    return parsedOrigin.host === req.headers.host || CORS_ORIGINS.has(parsedOrigin.origin);
+  } catch {
+    return false;
+  }
+}
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (!origin) return false;
+  try {
+    const allowedOrigin = new URL(origin).origin;
+    if (!CORS_ORIGINS.has(allowedOrigin)) return false;
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+    return true;
   } catch {
     return false;
   }
@@ -346,6 +366,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   if (urlPath === '/api' || urlPath.startsWith('/api/')) {
+    const corsAllowed = setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+      if (!corsAllowed) return sendJson(res, 403, { error: 'Cross-origin request blocked.' });
+      res.writeHead(204, {
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '600',
+      });
+      res.end();
+      return;
+    }
     try {
       await handleApi(req, res, urlPath);
     } catch (err) {
