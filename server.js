@@ -58,11 +58,11 @@ function scheduleSave() {
   saveTimer = setTimeout(saveNotesNow, 250);
 }
 
-function addNote(note) {
+function addNote(note, canReceive) {
   notes.push(note);
   if (notes.length > MAX_NOTES) notes = notes.slice(-MAX_NOTES);
   scheduleSave();
-  broadcast({ type: 'note', note });
+  broadcast({ type: 'note', note }, undefined, canReceive);
 }
 
 // ---------- HTTP helpers ----------
@@ -424,10 +424,11 @@ function send(ws, msg) {
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
 }
 
-function broadcast(msg, except) {
+function broadcast(msg, except, canReceive) {
   const data = JSON.stringify(msg);
   for (const client of wss.clients) {
-    if (client !== except && client.readyState === WebSocket.OPEN && client.userId) client.send(data);
+    if (client !== except && client.readyState === WebSocket.OPEN && client.userId &&
+        (!canReceive || canReceive(client))) client.send(data);
   }
 }
 
@@ -457,7 +458,10 @@ function socketsFor(userId) {
 }
 
 function systemNote(text) {
-  addNote({ id: crypto.randomUUID(), system: true, text, ts: Date.now() });
+  addNote(
+    { id: crypto.randomUUID(), system: true, adminOnly: true, text, ts: Date.now() },
+    (client) => auth.findById(client.userId)?.role === 'admin',
+  );
 }
 
 wss.on('connection', (ws) => {
@@ -468,7 +472,11 @@ wss.on('connection', (ws) => {
   });
 
   const user = auth.findById(ws.userId);
-  send(ws, { type: 'welcome', user: auth.publicUser(user), notes, users: onlineUsers() });
+  const visibleNotes = user.role === 'admin'
+    ? notes
+    : notes.filter((note) => !note.adminOnly &&
+      !(note.system && /(?:opened|closed) the notebook$/.test(note.text)));
+  send(ws, { type: 'welcome', user: auth.publicUser(user), notes: visibleNotes, users: onlineUsers() });
   broadcast({ type: 'presence', users: onlineUsers() });
   if (socketsFor(ws.userId) === 1) systemNote(`${ws.user} opened the notebook`);
 
