@@ -145,6 +145,12 @@
     try {
       const u = new URL(raw);
       return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+  function toSafeExternalUrl(raw) {
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+      if (u.username || u.password) return null;
+      return u.href;
     } catch {
       return null;
     }
@@ -159,6 +165,10 @@
       if (safeUrl) {
         const a = document.createElement('a');
         a.href = safeUrl;
+      const safeHref = toSafeExternalUrl(m[0]);
+      if (safeHref) {
+        const a = document.createElement('a');
+        a.href = safeHref;
         a.textContent = m[0];
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
