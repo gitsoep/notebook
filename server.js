@@ -552,7 +552,7 @@ async function bootstrapAdmin() {
   console.log('\n  No users found — created the first admin account.');
   console.log(`    username: ${username}`);
   if (!fromEnv) {
-    console.log(`    password: ${password}`);
+    console.log('    password: [REDACTED - not logged]');
     console.log('  You will be asked to choose a new password on first sign-in.\n');
   }
 }
