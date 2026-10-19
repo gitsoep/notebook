@@ -22,7 +22,7 @@ function sanitizeForLog(value) {
   const usernameForLog = sanitizeForLog(existing ? existing.username : username);
   console.log(`${existing ? 'Reset' : 'Created'} admin account.`);
   console.log(`  username: ${usernameForLog}`);
-  console.log(`  password: ${password}`);
+  console.log('  temporary password: [REDACTED - not logged]');
   console.log('You will be asked to choose a new password on first sign-in.');
 })().catch((err) => {
   console.error(err.message);
