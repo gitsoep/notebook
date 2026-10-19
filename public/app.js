@@ -141,17 +141,33 @@
     els.text.style.height = Math.min(els.text.scrollHeight, 180) + 'px';
   }
 
+  function toSafeExternalUrl(raw) {
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+      if (u.username || u.password) return null;
+      return u.href;
+    } catch {
+      return null;
+    }
+  }
+
   function appendLinkified(parent, text) {
     const re = /\bhttps?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]]/g;
     let last = 0;
     for (const m of text.matchAll(re)) {
       if (m.index > last) parent.append(text.slice(last, m.index));
-      const a = document.createElement('a');
-      a.href = m[0];
-      a.textContent = m[0];
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      parent.append(a);
+      const safeHref = toSafeExternalUrl(m[0]);
+      if (safeHref) {
+        const a = document.createElement('a');
+        a.href = safeHref;
+        a.textContent = m[0];
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        parent.append(a);
+      } else {
+        parent.append(m[0]);
+      }
       last = m.index + m[0].length;
     }
     if (last < text.length) parent.append(text.slice(last));
