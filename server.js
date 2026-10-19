@@ -68,14 +68,14 @@ function addNote(note, canReceive) {
 // ---------- HTTP helpers ----------
 
 function parseCookies(header) {
-  const out = {};
+  const out = new Map();
   for (const part of String(header || '').split(';')) {
     const i = part.indexOf('=');
     if (i < 0) continue;
     const key = part.slice(0, i).trim();
-    if (!key || key in out) continue;
+    if (!key || out.has(key)) continue;
     try {
-      out[key] = decodeURIComponent(part.slice(i + 1).trim());
+      out.set(key, decodeURIComponent(part.slice(i + 1).trim()));
     } catch {
       /* ignore malformed cookie */
     }
@@ -84,7 +84,7 @@ function parseCookies(header) {
 }
 
 function sessionFromReq(req) {
-  return auth.resolveSession(parseCookies(req.headers.cookie)[COOKIE_NAME]);
+  return auth.resolveSession(parseCookies(req.headers.cookie).get(COOKIE_NAME));
 }
 
 function sameOrigin(req) {
