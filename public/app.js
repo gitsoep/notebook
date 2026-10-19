@@ -141,6 +141,10 @@
     els.text.style.height = Math.min(els.text.scrollHeight, 180) + 'px';
   }
 
+  function toSafeHttpUrl(raw) {
+    try {
+      const u = new URL(raw);
+      return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
   function toSafeExternalUrl(raw) {
     try {
       const u = new URL(raw);
@@ -157,6 +161,10 @@
     let last = 0;
     for (const m of text.matchAll(re)) {
       if (m.index > last) parent.append(text.slice(last, m.index));
+      const safeUrl = toSafeHttpUrl(m[0]);
+      if (safeUrl) {
+        const a = document.createElement('a');
+        a.href = safeUrl;
       const safeHref = toSafeExternalUrl(m[0]);
       if (safeHref) {
         const a = document.createElement('a');
