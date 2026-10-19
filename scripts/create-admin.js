@@ -19,9 +19,8 @@ function sanitizeForLog(value) {
     await auth.createUser({ username, password, role: 'admin', mustChangePassword: true, createdBy: 'cli' });
   }
   auth.flush();
-  const usernameForLog = sanitizeForLog(existing ? existing.username : username);
   console.log(`${existing ? 'Reset' : 'Created'} admin account.`);
-  console.log(`  username: ${usernameForLog}`);
+  console.log('  username: [configured]');
   console.log('  temporary password: [REDACTED - not logged]');
   console.log('You will be asked to choose a new password on first sign-in.');
 })().catch((err) => {
