@@ -16,7 +16,7 @@ const auth = require('../auth');
   }
   auth.flush();
   console.log(`${existing ? 'Reset' : 'Created'} admin account.`);
-  console.log(`  username: ${existing ? existing.username : username}`);
+  console.log('  username: [redacted]');
   console.log(`  password: ${password}`);
   console.log('You will be asked to choose a new password on first sign-in.');
 })().catch((err) => {
