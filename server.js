@@ -550,9 +550,9 @@ async function bootstrapAdmin() {
   const password = process.env.ADMIN_PASSWORD || auth.generatePassword();
   await auth.createUser({ username, password, role: 'admin', mustChangePassword: !fromEnv, createdBy: 'system' });
   console.log('\n  No users found — created the first admin account.');
-  console.log(`    username: ${username}`);
+  console.log('    username: [configured]');
   if (!fromEnv) {
-    console.log(`    password: ${password}`);
+    console.log('    password: [REDACTED - not logged]');
     console.log('  You will be asked to choose a new password on first sign-in.\n');
   }
 }

@@ -2,6 +2,10 @@
 // Stop the server before running this: a running server keeps users in memory and would overwrite the change.
 const auth = require('../auth');
 
+function sanitizeForLog(value) {
+  return String(value).replace(/\r|\n/g, '');
+}
+
 (async () => {
   const username = process.argv[2] || 'admin';
   const password = auth.generatePassword();
@@ -15,8 +19,9 @@ const auth = require('../auth');
     await auth.createUser({ username, password, role: 'admin', mustChangePassword: true, createdBy: 'cli' });
   }
   auth.flush();
+  const usernameForLog = sanitizeForLog(existing ? existing.username : username);
   console.log(`${existing ? 'Reset' : 'Created'} admin account.`);
-  console.log(`  username: ${existing ? existing.username : username}`);
+  console.log(`  username: ${usernameForLog}`);
   console.log(`  password: ${password}`);
   console.log('You will be asked to choose a new password on first sign-in.');
 })().catch((err) => {
