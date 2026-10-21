@@ -5,6 +5,8 @@ A shared, real-time chat page where signed-in users exchange notes on one common
 - Live notes over WebSockets, with an online list and typing indicator
 - Notes persist to `data/notes.json` (last 500 kept)
 - Enter to send a note, Shift+Enter for a new line; URLs become links
+- Optional desktop notifications for new notes from others while the tab is in the background — click
+  **Alerts** in the sidebar to turn them on (requires HTTPS or `localhost`)
 
 ## Accounts
 

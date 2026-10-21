@@ -189,6 +189,8 @@ svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width:
 .me__role.is-admin { color: var(--accent); }
 .me__actions { display: flex; gap: 6px; }
 .me__actions .ghost { flex: 1; padding: 6px 8px; }
+.me__actions .ghost[hidden] { display: none; }
+.me__actions .ghost[aria-pressed="true"] { color: var(--accent); border-color: rgba(200, 241, 105, .4); }
 
 .ghost {
   font: 500 12px var(--sans);

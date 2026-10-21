@@ -3,7 +3,7 @@
   const els = {
     status: $('status'), today: $('today'), users: $('users'), count: $('count'),
     me: $('me'), meName: $('me-name'), meRole: $('me-role'), meAvatar: $('me-avatar'),
-    openPassword: $('open-password'), logout: $('logout'), openAdmin: $('open-admin'),
+    openPassword: $('open-password'), logout: $('logout'), notifyToggle: $('notify-toggle'), openAdmin: $('open-admin'),
     page: $('page'), notes: $('notes'), empty: $('empty'),
     composer: $('composer'), text: $('text'), send: $('send'), counter: $('counter'), typing: $('typing'),
     login: $('login'), loginForm: $('login-form'), loginUsername: $('login-username'),
@@ -310,6 +310,7 @@
           renderTyping();
           renderNote(msg.note);
           if (stick) scrollToBottom(true);
+          notifyNote(msg.note);
           break;
         }
         case 'presence':
@@ -441,6 +442,59 @@
   });
 
   els.logout.addEventListener('click', logout);
+
+  // ---------- Desktop notifications ----------
+
+  const NOTIFY_KEY = 'cn_notify';
+  const canNotify = 'Notification' in window && window.isSecureContext;
+
+  function notifyEnabled() {
+    return canNotify && Notification.permission === 'granted' && localStorage.getItem(NOTIFY_KEY) === '1';
+  }
+
+  function renderNotifyToggle() {
+    els.notifyToggle.hidden = !canNotify;
+    const on = notifyEnabled();
+    els.notifyToggle.textContent = on ? 'Alerts on' : 'Alerts off';
+    els.notifyToggle.setAttribute('aria-pressed', String(on));
+    els.notifyToggle.title = on
+      ? 'Desktop notifications are on for new notes'
+      : 'Get a desktop notification when someone writes a note';
+  }
+
+  els.notifyToggle.addEventListener('click', async () => {
+    if (notifyEnabled()) {
+      localStorage.setItem(NOTIFY_KEY, '0');
+    } else {
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        try { permission = await Notification.requestPermission(); } catch { permission = 'denied'; }
+      }
+      if (permission === 'granted') {
+        localStorage.setItem(NOTIFY_KEY, '1');
+        toast('Desktop notifications enabled.');
+      } else {
+        toast('Notifications are blocked. Allow them for this site in your browser settings.');
+      }
+    }
+    renderNotifyToggle();
+  });
+
+  function notifyNote(note) {
+    if (!notifyEnabled() || note.system || isMine(note)) return;
+    if (document.visibilityState === 'visible' && document.hasFocus()) return;
+    const body = note.text.length > 180 ? note.text.slice(0, 177) + '…' : note.text;
+    try {
+      const n = new Notification(`${note.author} wrote a note`, { body, tag: `note-${note.id}` });
+      n.addEventListener('click', () => {
+        window.focus();
+        scrollToBottom(true);
+        n.close();
+      });
+    } catch { /* some platforms only allow notifications from a service worker */ }
+  }
+
+  renderNotifyToggle();
 
   // ---------- Change password ----------
 
