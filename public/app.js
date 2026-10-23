@@ -3,7 +3,7 @@
   const els = {
     status: $('status'), today: $('today'), users: $('users'), count: $('count'),
     me: $('me'), meName: $('me-name'), meRole: $('me-role'), meAvatar: $('me-avatar'),
-    openPassword: $('open-password'), logout: $('logout'), notifyToggle: $('notify-toggle'), openAdmin: $('open-admin'),
+    openPassword: $('open-password'), logout: $('logout'), notifyToggle: $('notify-toggle'), presenceToggle: $('presence-toggle'), openAdmin: $('open-admin'),
     page: $('page'), notes: $('notes'), empty: $('empty'),
     composer: $('composer'), text: $('text'), send: $('send'), counter: $('counter'), typing: $('typing'),
     login: $('login'), loginForm: $('login-form'), loginUsername: $('login-username'),
@@ -37,6 +37,9 @@
   let retryTimer = null;
   let live = false;
   let lastNote = null;
+  let allNotes = [];
+  const PRESENCE_KEY = 'cn_presence';
+  let showPresence = localStorage.getItem(PRESENCE_KEY) !== '0';
   let lastTypingSent = 0;
   let knownUsers = new Set();
   let pwForced = false;
@@ -174,6 +177,16 @@
   }
 
   const isMine = (note) => !!me && (note.authorId ? note.authorId === me.id : note.author === me.username);
+  const isPresence = (note) => !!note.system && /(?:opened|closed) the notebook$/.test(note.text);
+  const isVisible = (note) => showPresence || !isPresence(note);
+
+  function renderAllNotes() {
+    els.notes.replaceChildren();
+    lastNote = null;
+    const visible = allNotes.filter(isVisible);
+    els.empty.hidden = visible.length > 0;
+    visible.forEach((n) => renderNote(n, false));
+  }
 
   function renderNote(note, animate = true) {
     if (!lastNote || dayKey(lastNote.ts) !== dayKey(note.ts)) {
@@ -270,6 +283,7 @@
     typers.clear();
     renderTyping();
     lastNote = null;
+    allNotes = [];
     els.empty.hidden = false;
   }
 
@@ -295,19 +309,20 @@
       switch (msg.type) {
         case 'welcome':
           setMe(msg.user);
-          els.notes.replaceChildren();
-          lastNote = null;
-          els.empty.hidden = msg.notes.length > 0;
-          msg.notes.forEach((n) => renderNote(n, false));
+          allNotes = msg.notes.slice();
+          renderAllNotes();
           renderUsers(msg.users);
           setComposerEnabled(true);
           if (!document.querySelector('dialog[open]')) els.text.focus();
           requestAnimationFrame(() => scrollToBottom(false));
           break;
         case 'note': {
-          const stick = nearBottom() || isMine(msg.note);
+          allNotes.push(msg.note);
+          if (allNotes.length > 500) allNotes = allNotes.slice(-500);
           if (msg.note.author) typers.delete(msg.note.author);
           renderTyping();
+          if (!isVisible(msg.note)) break;
+          const stick = nearBottom() || isMine(msg.note);
           renderNote(msg.note);
           if (stick) scrollToBottom(true);
           notifyNote(msg.note);
@@ -372,6 +387,7 @@
     els.meAvatar.style.setProperty('--c', inkFor(user.username));
     els.me.hidden = false;
     els.openAdmin.hidden = user.role !== 'admin' || user.mustChangePassword;
+    els.presenceToggle.hidden = user.role !== 'admin';
     if (user.role !== 'admin' && els.adminDialog.open) els.adminDialog.close();
   }
 
@@ -443,6 +459,64 @@
 
   els.logout.addEventListener('click', logout);
 
+  // ---------- Account menu ----------
+
+  const meTrigger = $('me-trigger');
+  const meMenu = $('me-menu');
+
+  function setMenu(open, focusTrigger) {
+    meMenu.hidden = !open;
+    meTrigger.setAttribute('aria-expanded', String(open));
+    if (open) {
+      const first = meMenu.querySelector('.me__item:not([hidden])');
+      if (first) first.focus();
+    } else if (focusTrigger) {
+      meTrigger.focus();
+    }
+  }
+
+  meTrigger.addEventListener('click', () => setMenu(meMenu.hidden));
+  meMenu.addEventListener('click', (e) => {
+    if (e.target.closest('.me__item')) setMenu(false);
+  });
+  meMenu.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = [...meMenu.querySelectorAll('.me__item:not([hidden])')];
+    const i = items.indexOf(document.activeElement);
+    const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[next].focus();
+  });
+  document.addEventListener('click', (e) => {
+    if (!meMenu.hidden && !els.me.contains(e.target)) setMenu(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !meMenu.hidden) setMenu(false, true);
+  });
+  els.me.addEventListener('focusout', (e) => {
+    if (!meMenu.hidden && e.relatedTarget && !els.me.contains(e.relatedTarget)) setMenu(false);
+  });
+
+  // ---------- Log-in/out visibility (admins) ----------
+
+  function renderPresenceToggle() {
+    els.presenceToggle.textContent = showPresence ? 'Log-ins on' : 'Log-ins off';
+    els.presenceToggle.setAttribute('aria-checked', String(showPresence));
+    els.presenceToggle.title = showPresence
+      ? 'Showing when people open and close the notebook'
+      : 'Show when people open and close the notebook';
+  }
+
+  els.presenceToggle.addEventListener('click', () => {
+    showPresence = !showPresence;
+    localStorage.setItem(PRESENCE_KEY, showPresence ? '1' : '0');
+    renderPresenceToggle();
+    renderAllNotes();
+    scrollToBottom(false);
+  });
+
+  renderPresenceToggle();
+
   // ---------- Desktop notifications ----------
 
   const NOTIFY_KEY = 'cn_notify';
@@ -453,16 +527,24 @@
   }
 
   function renderNotifyToggle() {
-    els.notifyToggle.hidden = !canNotify;
     const on = notifyEnabled();
     els.notifyToggle.textContent = on ? 'Alerts on' : 'Alerts off';
-    els.notifyToggle.setAttribute('aria-pressed', String(on));
-    els.notifyToggle.title = on
-      ? 'Desktop notifications are on for new notes'
-      : 'Get a desktop notification when someone writes a note';
+    els.notifyToggle.setAttribute('aria-checked', String(on));
+    els.notifyToggle.classList.toggle('is-unavailable', !canNotify);
+    els.notifyToggle.title = !canNotify
+      ? 'Desktop notifications need a secure (HTTPS) connection'
+      : on
+        ? 'Desktop notifications are on for new notes'
+        : 'Get a desktop notification when someone writes a note';
   }
 
   els.notifyToggle.addEventListener('click', async () => {
+    if (!canNotify) {
+      toast(window.isSecureContext
+        ? 'This browser doesn’t support desktop notifications.'
+        : 'Alerts need a secure connection — open the notebook over HTTPS (or via localhost).');
+      return;
+    }
     if (notifyEnabled()) {
       localStorage.setItem(NOTIFY_KEY, '0');
     } else {

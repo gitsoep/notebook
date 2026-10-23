@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#1c1d20" />
-  <title>Common Notebook</title>
+  <title>Notebook</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23c8f169'/><path d='M10 11h12M10 16h12M10 21h7' stroke='%231c1d20' stroke-width='2.6' stroke-linecap='round'/></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%2387bdff'/><path d='M10 11h12M10 16h12M10 21h7' stroke='%231c1d20' stroke-width='2.6' stroke-linecap='round'/></svg>" />
 </head>
 <body>
   <div class="glow" aria-hidden="true"></div>
@@ -21,7 +21,7 @@
           <svg viewBox="0 0 24 24"><path d="M6 7.5h12M6 12h12M6 16.5h7" /></svg>
         </span>
         <div>
-          <div class="brand__name">Common Notebook</div>
+          <div class="brand__name">Notebook</div>
           <div class="brand__date" id="today"></div>
         </div>
       </div>
@@ -31,23 +31,21 @@
         <ul id="users"></ul>
       </section>
 
-      <button type="button" class="nav-btn" id="open-admin" hidden>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1" /><circle cx="9.5" cy="7.5" r="3.5" /><path d="M19 8v6M22 11h-6" /></svg>
-        <span>Manage users</span>
-      </button>
-
       <div class="me" id="me" hidden>
-        <div class="me__row">
+        <button type="button" class="me__row" id="me-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="me-menu" title="Account menu">
           <span class="me__avatar" id="me-avatar" aria-hidden="true"></span>
-          <div class="me__info">
+          <span class="me__info">
             <strong id="me-name"></strong>
             <span class="me__role" id="me-role"></span>
-          </div>
-        </div>
-        <div class="me__actions">
-          <button type="button" id="notify-toggle" class="ghost" aria-pressed="false" hidden>Alerts off</button>
-          <button type="button" id="open-password" class="ghost">Password</button>
-          <button type="button" id="logout" class="ghost">Sign out</button>
+          </span>
+          <svg class="me__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5-5 5 5" /></svg>
+        </button>
+        <div class="me__menu" id="me-menu" role="menu" aria-labelledby="me-trigger" hidden>
+          <button type="button" id="open-admin" class="me__item" role="menuitem" hidden>Manage users</button>
+          <button type="button" id="notify-toggle" class="me__item" role="menuitemcheckbox" aria-checked="false">Alerts off</button>
+          <button type="button" id="presence-toggle" class="me__item" role="menuitemcheckbox" aria-checked="true" hidden>Log-ins on</button>
+          <button type="button" id="open-password" class="me__item" role="menuitem">Password</button>
+          <button type="button" id="logout" class="me__item me__item--danger" role="menuitem">Sign out</button>
         </div>
       </div>
     </aside>

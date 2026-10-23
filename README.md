@@ -1,4 +1,4 @@
-# The Common Notebook
+# The Notebook
 
 A shared, real-time chat page where signed-in users exchange notes on one common "notebook".
 
